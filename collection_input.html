@@ -1,0 +1,164 @@
+<html>
+	<head>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.2/jquery-ui.min.js"></script>
+<!--		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+		<link src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">-->
+		<link href="//fonts.googleapis.com/css?family=Open+Sans+Condensed:300,300italic,700" rel="stylesheet" type="text/css">
+		<link href="//fonts.googleapis.com/css?family=Lora:400,700" rel="stylesheet" type="text/css">
+		<link href="fetchCollection.css" rel="stylesheet" media="screen">
+
+		<script type="text/javascript">
+			$(function() {
+				$('#source_url').focus();
+
+				$(":input").blur(function () {
+					var real_text = $(this).val().trim();
+					if (real_text == '') {
+						$(this).val('');
+					}
+				});
+
+				$("#source_url_sender").submit(function (event) {
+					var focus = $(":focus").val().trim();
+					if (focus == '') {
+						$(":focus").val('');
+						event.preventDefault();
+					}
+				});
+			});
+		</script>
+	</head>
+	<body>
+		<div id="top_line">
+			<a href="https://analytics.hathitrust.org">
+				<img src="http://lgimages.s3.amazonaws.com/data/imagemanager/34307/htrc.jpg" height="50">
+				<span id="htrc">HathiTrust Research Center</span>
+			</a>
+		</div>
+		<div id="title"><h3>Import HathiTrust Collection as HTRC Workset</h3></div>
+
+		<form id="source_url_sender" method="post" enctype="multipart/form-data">
+			<div id="curl" class="field">
+				<div class="left_partition">
+					<label for="source_url" class="left_element">Collection URL</label>
+				</div>
+				<div class="right_partition">
+					<input type="url" id="source_url" name="source_url" class="right_element">
+				</div>	
+			</div>
+			<div id="fetch_collection_button_block" class="field">
+				<div class="left_partition"></div>
+				<div class="right_partition">
+					<input type="button" value="Fetch Collection" id="fetch_collection_button" class="right_element">
+				</div>
+			</div>
+			<div id="wst" class="field hidden">
+				<div class="left_partition">
+					<label for="htrc_workset_title" class="left_element">Workset Title</label>
+				</div>
+				<div class="right_partition">
+					<input type="text" id="htrc_workset_title" name="htrc_workset_title" class="right_element">
+				</div>
+			</div>
+			<div id="wscnm" class="field hidden">
+				<div class="left_partition">
+					<label for="workset_creator_name" class="left_element">Workset Creator<span class="req">*</span></label>
+					<input type="button" value="+" id="add_ws_creators" class="left_element">
+				</div>
+				<div class="right_partition">
+					<input type="text" id="workset_creator_name" name="workset_creator_name" required class="right_element">
+				</div>
+			</div>
+			<div id="ccnm" class="field hidden">
+				<div class="left_partition">
+					<label for="collection_creator_name" class="left_element">Collection Creator</label>
+				</div>
+				<div class="right_partition">
+					<input type="text" id="collection_creator_name" name="collection_creator_name" class="right_element">
+				</div>
+			</div>
+			<div id="abs" class="field hidden">
+				<div class="left_partition textarea_label">
+					<label for="abstract" class="left_element textarea_left_element">Abstract<span class="req">*</span></label>
+					<label for="abstract" class="left_element subheading">A brief description</label>
+				</div>
+				<div class="right_partition">
+					<textarea rows="3" cols="40" id="abstract" name="abstract" required class="right_element"></textarea>
+				</div>
+			</div>
+			<div id="cri" class="field hidden">
+				<div class="left_partition textarea_label">
+					<label for="criteria" class="left_element textarea_left_element">Selection Criteria</label>
+				</div>
+				<div class="right_partition">
+					<textarea rows="3" cols="40" id="criteria" name="criteria" class="right_element"></textarea>
+				</div>
+			</div>
+			<div id="rm" class="field hidden">
+				<div class="left_partition textarea_label">
+					<label for="research_motivation" class="left_element textarea_left_element">Research Motivation</label>
+					<label for="research_motivation" class="left_element subheading">Tell us why you made this</label>
+				</div>
+				<div class="right_partition">
+					<textarea rows="3" cols="40" id="research_motivation" name="research_motivation" class="right_element"></textarea>
+				</div>
+			</div>
+			<div id="button_block" class="field hidden">
+				<div class="left_partition"></div>
+				<div class="right_partition">
+					<input type="submit" value="Create Workset" id="create_workset_button" class="right_element" disabled>
+				</div>
+			</div>
+		</form>
+		<script type="text/javascript">
+			$('#fetch_collection_button').click(function() {
+				var data = { 'function': 'retrieve', 'source_url': encodeURIComponent($("#source_url").val()) };
+				$.post("/fetchCollection", data)
+				.done(function(results) {
+					if (results[0] == '<') {
+						alert("Invalid Collection ID");
+					}
+					else {
+						var collection_object = JSON.parse(results);
+						$('.hidden').removeClass('hidden');
+						$('#fetch_collection_button').addClass('hidden');
+						$('#htrc_workset_title').attr('value',collection_object['title']);
+						$('#collection_creator_name').attr('value',collection_object['created']);
+						$('#abstract').text(collection_object['description']);
+
+						var newdiv = document.createElement('input');
+						newdiv.type = 'hidden';
+						newdiv.name = 'source_data';
+						newdiv.value = results;
+						$('form').append(newdiv);
+
+						$("#source_url").addClass('hidden');
+						$("#source_url").after('<div class="right_element text_display">' + $("#source_url").val() + '</div>');
+
+						$('#htrc_workset_title').focus();
+
+						$('#create_workset_button').prop('disabled',false);
+					}
+				});
+			});
+
+			var ws_author_counter = 1;
+			$('#add_ws_creators').click(function() {
+				if (ws_author_counter < 10) {
+					var newauthor = document.createElement('div');
+					newauthor.className = 'field';
+					newauthor.setAttribute('id','awscnm' + ws_author_counter);
+					newauthor.innerHTML = '<div class="left_partition"></div><div class="right_partition"><input type="text" id="additional_creator_name" name="additional_creator_name" placeholder="Additional Author" class="right_element"></div>';
+					if (ws_author_counter == 1) {
+						$("#wscnm").after(newauthor);
+					}
+					else {
+						$("#awscnm" + (ws_author_counter-1)).after(newauthor);
+					}
+					ws_author_counter++;
+				}
+			});
+		</script>
+	</body>
+</html>

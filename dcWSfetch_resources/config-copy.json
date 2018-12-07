@@ -1,0 +1,171 @@
+{
+	"services": {
+		"dcWSfetch": {
+			"resources": "http://acbres224.ischool.illinois.edu/dcWSfetch_resources/",
+			"limit": 9500,
+			"getItems3": {
+				"parentMethod": "http://localhost:8080/dcWSfetch/getDescription",
+				"frame": "http://acbres224.ischool.illinois.edu/dcWSfetch_resources/WorksetFrameItems.jsonld",								
+				"required": [
+					"id"
+				],
+				"optional": [
+
+				]
+			},
+			"getItems2": {
+                                "query": "http://acbres224.ischool.illinois.edu/dcWSfetch_resources/sparql/dcWSfetch/getItems.sparql",
+                                "required": [
+                                        "id"
+                                ],
+                                "optional": [
+
+                                ],
+				"id": {
+                                       "transform": "?WorkSetId",
+                                        "type": "url"
+                                }
+                        },
+			"getItems": {
+                                "query": "http://acbres224.ischool.illinois.edu/dcWSfetch_resources/sparql/dcWSfetch/getItems.sparql",
+				"context": "http://acbres224.ischool.illinois.edu/dcWSfetch_resources/WorksetContext.jsonld",
+"paging": {
+					"query": "http://acbres224.ischool.illinois.edu/dcWSfetch_resources/sparql/dcWSfetch/getItems.sparql",
+					"field": "http://www.europeana.eu/schemas/edm/gathers"
+				},
+                                "required": [
+                                        "id"
+                                ],
+                                "optional": [
+
+                                ],
+                                "id": {
+                                       "transform": "?WorkSetId",
+                                        "type": "url"
+                                }
+                        },
+			"getWsItemsWithVolMeta": {
+                "query": "http://acbres224.ischool.illinois.edu/dcWSfetch_resources/sparql/dcWSfetch/getWsItemsWithVolMeta.sparql",
+				"context": "http://acbres224.ischool.illinois.edu/dcWSfetch_resources/WorksetContext.jsonld",
+                "required": [
+                      "id"
+                 ],
+                "optional": [
+                 ],
+                "id": {
+                       "transform": "?WorkSetId",
+                       "type": "url"
+                 }
+             },    
+			"getWsItemsWithVolMetaPortal": {
+                "query": "http://acbres224.ischool.illinois.edu/dcWSfetch_resources/sparql/dcWSfetch/getWsItemsWithVolMetaPortal.sparql",
+				"context": "http://acbres224.ischool.illinois.edu/dcWSfetch_resources/WorksetContext.jsonld",
+                "required": [
+                      "id"
+                 ],
+                "optional": [
+                 ],
+                "id": {
+                       "transform": "?WorkSetId",
+                       "type": "url"
+                 }
+             },  			 
+			"getShortDescription": {
+                                "query": "http://acbres224.ischool.illinois.edu/dcWSfetch_resources/sparql/dcWSfetch/shortDescription.sparql",
+                                "context": "http://acbres224.ischool.illinois.edu/dcWSfetch_resources/WorksetContext.jsonld",
+                                "required": [
+                                        "id"
+                                ],
+                                "optional": [
+
+                                ],
+                                "id": {
+                                        "transform": "?WorkSetId",
+                                        "type": "url"
+                                }
+                        },
+			"getDescription": {
+				"query": "http://acbres224.ischool.illinois.edu/dcWSfetch_resources/sparql/dcWSfetch/getDescription.sparql",
+				"context": "http://acbres224.ischool.illinois.edu/dcWSfetch_resources/WorksetContext.jsonld",
+				"paging": {
+					"query": "http://acbres224.ischool.illinois.edu/dcWSfetch_resources/sparql/dcWSfetch/getDescriptionPaging.sparql",
+					"field": "http://www.europeana.eu/schemas/edm/gathers"
+				},
+				"required": [
+					"id"
+				],
+				"optional": [
+
+				],
+				"id": {
+					"transform": "?WorkSetId",
+					"type": "url"
+				}
+			},
+			"getWsDescripWithVolMeta": {
+				"query": "http://acbres224.ischool.illinois.edu/dcWSfetch_resources/sparql/dcWSfetch/getWsDescripWithVolMeta.sparql",
+				"context": "http://acbres224.ischool.illinois.edu/dcWSfetch_resources/WorksetContext.jsonld",
+				"required": [
+					"id"
+				],
+				"optional": [
+
+				],
+				"id": {
+					"transform": "?WorkSetId",
+					"type": "url"
+				}
+ 			},
+			"getWsDescripWithVolMetaPortal": {
+				"query": "http://acbres224.ischool.illinois.edu/dcWSfetch_resources/sparql/dcWSfetch/getWsDescripWithVolMetaPortal.sparql",
+				"context": "http://acbres224.ischool.illinois.edu/dcWSfetch_resources/WorksetContext.jsonld",
+				"required": [
+					"id"
+				],
+				"optional": [
+
+				],
+				"id": {
+					"transform": "?WorkSetId",
+					"type": "url"
+				}
+ 			},			
+			"getDescription2": {
+				"query": "http://acbres224.ischool.illinois.edu/dcWSfetch_resources/sparql/dcWSfetch/getDescription.sparql",								
+				"required": [
+					"id"
+				],
+				"optional": [
+
+				],
+				"id": {
+					"transform": "?WorkSetId",
+					"type": "url"
+				}
+			},
+			"list": {
+				"query": "http://acbres224.ischool.illinois.edu/dcWSfetch_resources/sparql/dcWSfetch/list.sparql",
+				"context": "http://acbres224.ischool.illinois.edu/dcWSfetch_resources/WorksetContext.jsonld",
+				"customized": true,
+				"function": "listCustom",
+				"required": [
+					"vis"
+				],
+				"optional": [
+					"creator",
+					"group"
+				],
+				"vis": {
+					"type": "string",
+					"range": ["public","private","group"]
+				},
+				"creator": {
+					"type": "string"
+				},
+				"group": {
+					"type": "string"
+				}								
+			}
+		}
+	}
+}

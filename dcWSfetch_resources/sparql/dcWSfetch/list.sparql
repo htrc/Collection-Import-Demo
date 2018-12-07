@@ -1,0 +1,26 @@
+prefix dcterms: <http://purl.org/dc/terms/>
+prefix edm: <http://www.europeana.eu/schemas/edm/>
+prefix htrc: <http://wcsa.htrc.illinois.edu/> 
+prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+prefix xsd: <http://www.w3.org/2001/XMLSchema#>
+
+CONSTRUCT {
+  ?wsid
+      rdf:type htrc:Workset ;
+      dcterms:title ?title ;
+      dcterms:creator ?cre ; 
+      dcterms:created ?dat ;
+      dcterms:extent  ?ext ;
+      htrc:hasVisibility ?vis .} 
+
+where {
+  ?wsid 
+      rdf:type htrc:Workset ;
+      dcterms:title ?title ;
+      dcterms:creator ?cre ; 
+      dcterms:created ?dat ;
+      dcterms:extent  ?ext ;
+      htrc:hasVisibility ?vis . 
+
+   OPTIONAL { ?wsid htrc:hasGroup ?group }
+

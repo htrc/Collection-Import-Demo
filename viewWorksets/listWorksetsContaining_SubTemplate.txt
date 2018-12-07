@@ -1,0 +1,10 @@
+	union
+	{select ?vols, ?ws
+	 where {
+		 ?ws dcterms:created ?cre .
+		 ?vols ^edm:gathers ?ws
+				 VALUES ?vols {$vid$}
+	} ORDER BY DESC(?cre)
+		LIMIT 5
+	}
+}
