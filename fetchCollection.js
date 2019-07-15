@@ -6,8 +6,6 @@ var request = require("request");
 var formidable = require("formidable");
 //Library for input sanitation
 var sanitizer = require('validator');
-//jwt library
-var jwt = require('jsonwebtoken');
 //uuid library
 const uuidv1 = require('uuid/v1');
 //config library
