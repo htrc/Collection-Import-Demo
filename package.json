@@ -28,7 +28,7 @@
     "then-request": "^6.0.2",
     "type-is": "^1.6.18",
     "underscore": "^1.12.1",
-    "validator": "^10.11.0",
+    "validator": "^13.7.0",
     "winston-transport": "^4.3.0",
     "xml2js": "^0.4.23"
   },
