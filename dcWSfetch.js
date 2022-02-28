@@ -5,14 +5,14 @@
 //_ is an array, collection and text library
 //jsonld library
 //Q for promises
-var url = require('url');
-var querystring = require('querystring');
-var thenRequest = require('then-request');
-var async = require('async');
-var _ = require('underscore');
-var jsonld = require('jsonld');
-var Q = require('q');
-var config = require('config');
+import url from 'url';
+import querystring from 'querystring';
+import thenRequest from 'then-request';
+import async from 'async';
+import _ from 'underscore';
+import jsonld from 'jsonld';
+import Q from 'q';
+import config from 'config';
 
 //load jsonConfig
 var jsonConfig = {};
@@ -70,20 +70,20 @@ async.series([
 //Used to load results where the number of triples is greater than the set limit
 function tracePage(serviceConfig,pOffset,pLimit) {
 	var tracePagePromise = Q.defer();
-	pageQuery = serviceConfig.resPaging;
+	var pageQuery = serviceConfig.resPaging;
 	pOffset = pOffset + pLimit + 1;
 	pageQuery = pageQuery + " OFFSET " + pOffset + " LIMIT " + pLimit;
-	sqlParser = new SqlParser(pageQuery, params, serviceConfig);
+	var sqlParser = new SqlParser(pageQuery, params, serviceConfig);
 	sqlParser.replace();
 	pageQuery = sqlParser.getRdfSql();
 								
-	pagedSqlPoster = new PostCode(host, defaultGraphUrl, pageQuery, shouldSponge, format, timeout, debug);
-	pagedBody = pagedSqlPoster.postQuery();
+	var pagedSqlPoster = new PostCode(host, defaultGraphUrl, pageQuery, shouldSponge, format, timeout, debug);
+	var pagedBody = pagedSqlPoster.postQuery();
 	pagedBody.then(function(resPaged) {
-		jsonPaged = JSON.parse(resPaged.getBody('UTF-8'));
+		var jsonPaged = JSON.parse(resPaged.getBody('UTF-8'));
 		if (jsonPaged["@graph"]!==undefined&&jsonPaged["@graph"][0][serviceConfig.paging.field] !== undefined) {
 			var objectPaged = jsonPaged["@graph"][0][serviceConfig.paging.field];
-			nextPage = tracePage(serviceConfig,pOffset,pLimit);
+			var nextPage = tracePage(serviceConfig,pOffset,pLimit);
 			nextPage.then(function(resPage){						
 				objectPaged.push.apply(objectPaged,resPage);
 				tracePagePromise.resolve(objectPaged);
@@ -97,7 +97,7 @@ function tracePage(serviceConfig,pOffset,pLimit) {
 	return tracePagePromise.promise;
 }
 
-exports.runSPARQLQuery = function(req,res) {
+export function runSPARQLQuery(req,res) {
 	// set content-type based on output parameter
 	var serviceName = "dcWSfetch";
 	var serviceMethod = req.params.serviceMethod;
@@ -119,14 +119,14 @@ exports.runSPARQLQuery = function(req,res) {
 
 		var queryString = url.parse(req.url, true).query;
 
-		requiredParam = jsonConfig.services[serviceName][serviceMethod]["required"];
-		optionalParam = jsonConfig.services[serviceName][serviceMethod]["optional"];
+		var requiredParam = jsonConfig.services[serviceName][serviceMethod]["required"];
+		var optionalParam = jsonConfig.services[serviceName][serviceMethod]["optional"];
 		optionalParam.push("offset");
 		optionalParam.push("limit");
 
-		format = "application/x-json+ld";
-		output = "application/ld+json"
-		params = {};
+		var format = "application/x-json+ld";
+		var output = "application/ld+json"
+		var params = {};
 		var serviceConfig = jsonConfig.services[serviceName][serviceMethod];
 		//Parse url parameters , check if there is some parameters that is not allowed
 		console.time("parseparam");
@@ -138,8 +138,8 @@ exports.runSPARQLQuery = function(req,res) {
 			if (serviceConfig[key] !== undefined && serviceConfig[key]['type'] !== undefined) {
 				switch (serviceConfig[key]['type']) {
 					case "url":
-						urlRegex = /^(https?:\/\/(?:www\.|(?!www))[^\s\.]+\.[^\s]{2,}|www\.[^\s]+\.[^\s]{2,})\w$/;
-						result = val.match(urlRegex);
+						var urlRegex = /^(https?:\/\/(?:www\.|(?!www))[^\s\.]+\.[^\s]{2,}|www\.[^\s]+\.[^\s]{2,})\w$/;
+						var result = val.match(urlRegex);
 						val = '<'+val+'>';
 
 						if (result === null) {
@@ -147,8 +147,8 @@ exports.runSPARQLQuery = function(req,res) {
 						}
 						break;
 					case "number":
-						numberRegex = /^[0-9]*/;
-						result = val.match(numberRegex);
+						var numberRegex = /^[0-9]*/;
+						var result = val.match(numberRegex);
 
 						if (result === null) {
 							throw Error("Parameter " + key + " must be a number");
@@ -164,12 +164,12 @@ exports.runSPARQLQuery = function(req,res) {
 		//Set response / result header into requested format
 		res.setHeader('content-type', output);
 
-		host = config.get('Read-Only_Endpoint.domain') + ':' + config.get('Read-Only_Endpoint.port');
-		defaultGraphUrl = "";
-		shouldSponge = "";
-		timeout = 0;
-		debug = "off";
-		query = "";
+		var host = config.get('Read-Only_Endpoint.domain') + ':' + config.get('Read-Only_Endpoint.port');
+		var defaultGraphUrl = "";
+		var shouldSponge = "";
+		var timeout = 0;
+		var debug = "off";
+		var query = "";
 
 		var body = {};
 
@@ -181,11 +181,11 @@ exports.runSPARQLQuery = function(req,res) {
 			//Get SPARQL Query as text
 			if (serviceConfig.customized) {
 				//Custom query function
-				customQuery = new CustomQuery();
+				var customQuery = new CustomQuery();
 				query = customQuery[serviceConfig['function']](serviceConfig, params, query);
 			} else {
 				//Parse the rdfSql first and inject parameters:query:
-				sqlParser = new SqlParser(query, params, serviceConfig);
+				var sqlParser = new SqlParser(query, params, serviceConfig);
 				sqlParser.replace();
 				query = sqlParser.getRdfSql();
 			}
@@ -207,7 +207,7 @@ exports.runSPARQLQuery = function(req,res) {
 				query = query + " LIMIT " + limit;
 			}
 
-			sqlPorter = new PostCode(host, defaultGraphUrl, query, shouldSponge, format, timeout, debug);
+			var sqlPorter = new PostCode(host, defaultGraphUrl, query, shouldSponge, format, timeout, debug);
 			console.time("postQuery");
 			body = sqlPorter.postQuery();
 			body.then(function(resBody) {
@@ -215,7 +215,7 @@ exports.runSPARQLQuery = function(req,res) {
 				console.timeEnd("postQuery");
 
 				var jsonldBody = JSON.parse(resBody.getBody('UTF-8'));
-				postPagingDefer = Q.defer();
+				var postPagingDefer = Q.defer();
 
 				//Paging handler
 				if (serviceConfig.paging !== undefined) {				
@@ -272,8 +272,8 @@ CustomQuery.prototype.listCustom = function(config, param, query) {
 	if (param['vis'] == undefined) {
 		throw Error("parameter vis is missing");
 	}
-	condition = " VALUES ( ";
-	values = "{ ( ";
+	var condition = " VALUES ( ";
+	var values = "{ ( ";
 	condition += " ?vis ";
 	values += " \"" + param['vis'] + "\" ";
 	if (param['creator'] !== undefined) {
@@ -308,11 +308,11 @@ SqlParser.prototype.getRdfSql = function() {
 }
 
 SqlParser.prototype.replace = function() {
-	self = this;
+	var self = this;
 	Object.keys(this.params).forEach(function(key) {
-		value = self.params[key];
+		var value = self.params[key];
 		if (self.config[key] !== undefined) {
-			transform = self.config[key]['transform'];
+			var transform = self.config[key]['transform'];
 			self.rdfSql = self.rdfSql.replace(transform, value)
 		}
 	});
@@ -333,7 +333,7 @@ function PostCode(host, defaultGraphUrl, query, shouldSponge, format, timeout, d
 
 PostCode.prototype.postQuery = function() {
 	// Build the post string from an object
-	post_data = querystring.stringify({
+	var post_data = querystring.stringify({
 		'default-graph-uri': this.defaultGraphUrl,
 		'query': this.query,
 		'should-sponge': this.shouldSponge,
@@ -342,7 +342,7 @@ PostCode.prototype.postQuery = function() {
 	});
 
 
-	queryString = {
+	var queryString = {
 		'default-graph-uri': this.defaultGraphUrl,
 		'query': this.query,
 		//		'should-sponge': this.shouldSponge,
@@ -353,7 +353,7 @@ PostCode.prototype.postQuery = function() {
 
 	// An object of options to indicate where to post to
 
-	post_options = {
+	var post_options = {
 		host: this.host,
 		path: '/' + config.get('Read-Only_Endpoint.path'),
 		method: 'POST',
@@ -362,14 +362,13 @@ PostCode.prototype.postQuery = function() {
 		}
 	}
 
-	get_options = {
+	var get_options = {
 		url: this.host + '/' + config.get('Read-Only_Endpoint.path'),
 		qs: queryString,
 	};
 
 	// Synchronous get request
-	localThenRequest = require('then-request');
-	return localThenRequest('POST', this.host + config.get('Read-Only_Endpoint.path'), {
+	return thenRequest('POST', this.host + config.get('Read-Only_Endpoint.path'), {
 		qs: queryString
 	});
 

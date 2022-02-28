@@ -1,38 +1,54 @@
 //reading file system / file
-var fs = require("fs");
+import fs from "fs";
 //var http = require('http');
-var request = require("request");
+import needle from 'needle';
 //Library to handle forms
-var formidable = require("formidable");
+import formidable from "formidable";
 //Library for input sanitation
-var sanitizer = require('validator');
+import validator from 'validator';
 //uuid library
-const uuidv1 = require('uuid/v1');
+import { v1 as uuidv1 } from 'uuid';
 //config library
-var config = require('config');
+import config from 'config';
+//ajv library
+import Ajv from 'ajv';
+// validator
+var ajv = new Ajv();
+
+var SOURCE_DATA_SCHEMA = {
+	"type": "object",
+	"properties": {
+		"extent": { "type": [ "integer", "string" ] },
+		"created": { "type": "string" },
+		"title": { "type": "string" },
+		"description": { "type": "string" },
+		"gathers": { 
+			"type": "array",
+			"items": { 
+				"type": "object", 
+				"properties": {
+					"htitem_id": { "type": "string" }
+				}
+			}
+		}
+	}
+};
+
+var validate = ajv.compile(SOURCE_DATA_SCHEMA);
 
 function extractCollectionIDFromURL(url) {
 	return url.substring(url.indexOf('c=')+2);
 }
 
 function addPageSynchronously(query_index,queries) {
-	request({
-		method: 'POST',
-		uri: config.get('Read-Write_Endpoint.domain') + ':' + config.get('Read-Write_Endpoint.port') + '/' + config.get('Read-Write_Endpoint.path'),
-		port: config.get('Read-Write_Endpoint.port'),
-		form: {
-			'default-graph-uri': '',
-			'query': queries[query_index],
-			'format': 'text/html'
-		},
-		auth: {
-			user: config.get('Read-Write_Endpoint.username'),
-			password:  config.get('Read-Write_Endpoint.password'),
-			sendImmediately: false
-		},
-		headers: {
-			'Content-Type': 'application/x-www-form-unencoded',
-		}
+	needle.post(config.get('Read-Write_Endpoint.domain') + ':' + config.get('Read-Write_Endpoint.port') + '/' + config.get('Read-Write_Endpoint.path'),{
+		'default-graph-uri': '',
+		'query': queries[query_index],
+		'format': 'text/html'
+	},{
+		username: config.get('Read-Write_Endpoint.username'),
+		password: config.get('Read-Write_Endpoint.password'),
+		auth: 'digest'
 	}, function (er,rs,bd) {
 		if (er) {
 			console.log("ERROR IN ADDING VOLUMES TO WORKSET");
@@ -56,11 +72,12 @@ function gathersPaging(workset,page_size,graph_url,target_url) {
 	base_text += 'INSERT INTO ' + graph_url + '\n';
 	base_text += '{\n';
 
-	queries = []
+	var queries = []
 
 	for (var volume_counter = page_size; volume_counter < workset['gathers'].length; volume_counter++) {
+		var new_query = '';
 		if (volume_counter % page_size == 0) {
-			var new_query = base_text;
+			new_query = base_text;
 		}
 
 		new_query += target_url + '\tns3:gathers\t<http://hdl.handle.net/2027/' + workset['gathers'][volume_counter]['htitem_id'] + '> .\n';
@@ -100,8 +117,8 @@ function gathersPaging(workset,page_size,graph_url,target_url) {
 function buildWorksetObject(fields) {
 	var workset = {};
 
-	if ('source_data' in fields && typeof fields.source_data == 'string' && sanitizer.isJSON(fields.source_data)) {
-		var collection = JSON.parse(fields.source_data);
+	if ('source_data' in fields && typeof fields.source_data == 'string' && validate(fields.source_data)) {
+		var collection = fields.source_data;
 	}
 	else {
 		return undefined;
@@ -122,8 +139,8 @@ function buildWorksetObject(fields) {
 
 	workset['created'] = yyyy + '-' + mm + '-' + dd;
 
-	if ('extent' in collection && typeof collection.extent == 'string' && sanitizer.escape(collection['extent']).length > 0) {
-		workset['extent'] = sanitizer.escape(collection['extent']);
+	if ('extent' in collection && typeof collection.extent == 'string' && validator.escape(collection['extent']).length > 0) {
+		workset['extent'] = validator.escape(collection['extent']);
 	}
 	else if (Number.isInteger(collection.extent)) {
 		workset['extent'] = collection['extent'];
@@ -132,31 +149,31 @@ function buildWorksetObject(fields) {
 		return undefined;
 	}
 
-	if ('workset_creator_name' in fields && typeof fields.workset_creator_name == 'string' && sanitizer.escape(fields['workset_creator_name']).length > 0) {
-		workset['primary_creator'] = sanitizer.escape(fields['workset_creator_name']);
+	if ('workset_creator_name' in fields && typeof fields.workset_creator_name == 'string' && validator.escape(fields['workset_creator_name']).length > 0) {
+		workset['primary_creator'] = validator.escape(fields['workset_creator_name']);
 	}
-	else if ('created' in collection && typeof collection.created == 'string' && sanitizer.escape(collection['created']).length > 0) {
-		workset['primary_creator'] = sanitizer.escape(collection['created']);
-	}
-	else {
-		return undefined;
-	}
-
-	if ('htrc_workset_title' in fields && typeof fields.htrc_workset_title == 'string' && sanitizer.escape(fields['htrc_workset_title']).length > 0) {
-		workset['title'] = sanitizer.escape(fields['htrc_workset_title']);
-	}
-	else if ('title' in collection && typeof collection.title == 'string' && sanitizer.escape(collection['title']).length > 0) {
-		workset['title'] = sanitizer.escape(collection['title']);
+	else if ('created' in collection && typeof collection.created == 'string' && validator.escape(collection['created']).length > 0) {
+		workset['primary_creator'] = validator.escape(collection['created']);
 	}
 	else {
 		return undefined;
 	}
 
-	if ('abstract' in fields && typeof fields.abstract == 'string' && sanitizer.escape(fields['abstract']).length > 0) {
-		workset['abstract'] = sanitizer.escape(fields['abstract']);
+	if ('htrc_workset_title' in fields && typeof fields.htrc_workset_title == 'string' && validator.escape(fields['htrc_workset_title']).length > 0) {
+		workset['title'] = validator.escape(fields['htrc_workset_title']);
 	}
-	else if ('description' in collection && typeof collection.description == 'string' && sanitizer.escape(collection['description']).length > 0) {
-		workset['abstract'] = sanitizer.escape(collection['description']);
+	else if ('title' in collection && typeof collection.title == 'string' && validator.escape(collection['title']).length > 0) {
+		workset['title'] = validator.escape(collection['title']);
+	}
+	else {
+		return undefined;
+	}
+
+	if ('abstract' in fields && typeof fields.abstract == 'string' && validator.escape(fields['abstract']).length > 0) {
+		workset['abstract'] = validator.escape(fields['abstract']).replace(/\n/g,'');
+	}
+	else if ('description' in collection && typeof collection.description == 'string' && validator.escape(collection['description']).length > 0) {
+		workset['abstract'] = validator.escape(collection['description']).replace(/\n/g,'');
 	}
 	else {
 		return undefined;
@@ -173,7 +190,7 @@ function buildWorksetObject(fields) {
 	OPTIONAL FIELDS
 */
 
-	if ('source_url' in fields && typeof fields.source_url == 'string' && sanitizer.isURL(fields.source_url)) {
+	if ('source_url' in fields && typeof fields.source_url == 'string' && validator.isURL(fields.source_url)) {
 		workset['origin'] = fields.source_url;
 	}
 	
@@ -184,21 +201,21 @@ function buildWorksetObject(fields) {
 
 	workset['additional_creators'] = []
 	for (var index = 1; index < 10; index++) {
-		if (('additional_creator_name'+index) in fields && typeof fields['additional_creator_name'+index] == 'string' && sanitizer.escape(fields['additional_creator_name'+index]).length > 0) {
-			workset['additional_creators'].push(sanitizer.escape(fields['additional_creator_name'+index]));
+		if (('additional_creator_name'+index) in fields && typeof fields['additional_creator_name'+index] == 'string' && validator.escape(fields['additional_creator_name'+index]).length > 0) {
+			workset['additional_creators'].push(validator.escape(fields['additional_creator_name'+index]));
 		}
 	}
 
-	if ('created' in collection && typeof collection.created == 'string' && sanitizer.escape(collection['created']).length > 0 && collection['created'] != workset['primary_creator']) {
-		workset['additional_creators'].push(sanitizer.escape(collection['created']));
+	if ('created' in collection && typeof collection.created == 'string' && validator.escape(collection['created']).length > 0 && collection['created'] != workset['primary_creator'] ) {
+		workset['additional_creators'].push(validator.escape(collection['created']));
 	}
 
-	if ('research_motivation' in fields && typeof fields.research_motivation == 'string' && sanitizer.escape(fields['research_motivation']).length > 0) {
-		workset['research_motivation'] = sanitizer.escape(fields.research_motivation);
+	if ('research_motivation' in fields && typeof fields.research_motivation == 'string' && validator.escape(fields['research_motivation']).length > 0) {
+		workset['research_motivation'] = validator.escape(fields.research_motivation);
 	}
 
-	if ('criteria' in fields && typeof fields.criteria == 'string' && sanitizer.escape(fields.criteria).length > 0) {
-		workset['criteria'] = sanitizer.escape(fields.criteria);
+	if ('criteria' in fields && typeof fields.criteria == 'string' && validator.escape(fields.criteria).length > 0) {
+		workset['criteria'] = validator.escape(fields.criteria);
 	}
 
 	return workset;
@@ -260,7 +277,7 @@ function submitWorksetToVirtuoso(workset,res,return_html) {
 
 	var temporal_index = 0;
 	while ('temporal_coverage' + temporal_index.toString() in fields && sanitizer.escape(fields['temporal_coverage' + temporal_index.toString()]) != '') {
-		query += '\tns2:temporal\t"' + sanitizer.escape(fields['temporal_coverage' + temporal_index.toString()]) + '" ;\n';
+		query += '\tns2:temporal\t"' + validator.escape(fields['temporal_coverage' + temporal_index.toString()]) + '" ;\n';
 		temporal_index += 1;
 	}*/
 
@@ -271,12 +288,12 @@ function submitWorksetToVirtuoso(workset,res,return_html) {
 	query += '\tns1:intendedForUse\t<http://example.org/htrc.algorithm> ;\n';
 	query += '\tns1:hasVisibility\t"public" .\n';
 
-	var max = workset['gathers'].length < 10000 ? workset['gathers'].length : 10000;
+	var max = workset['gathers'].length < 1000 ? workset['gathers'].length : 1000;
 	for (var item = 0; item < max; item ++) {
 		query += target_url + '\tns3:gathers\t<http://hdl.handle.net/2027/' + workset['gathers'][item]['htitem_id'] + '> .\n';
 	}
 
-	query += '}';
+	query += '};\n\n';
 
 	console.log("ABOUT TO SEND TURTLE FILE");
 
@@ -374,18 +391,10 @@ function submitWorksetToVirtuoso(workset,res,return_html) {
 function getCollectionFromURL(collection_id,res) {
 	console.log("COLLECTION ID");
 	console.log(collection_id);
-	request({
-		method: 'POST',
-		uri: 'https://babel.hathitrust.org/cgi/mb',
-		headers: {
-			'Content-Type': 'application/x-www-form-unencoded',
-			'Accept': 'application/json'
-		},
-		form: {
-			c: collection_id,
-			a: 'download',
-			format: 'json'
-		}
+	needle.post('https://babel.hathitrust.org/cgi/mb',{
+		c: collection_id,
+		a: 'download',
+		format: 'json'
 	}).pipe(res);
 }
 
@@ -414,7 +423,7 @@ function saveWorkset(fields,res,return_html) {
 	}
 }
 
-exports.respondToPOST = function(req,res) {
+export function respondToPOST(req,res) {
 	res.header("Access-Control-Allow-Origin", "*");
 	res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     res.header("Content-type", "application/json");
@@ -452,7 +461,7 @@ exports.respondToPOST = function(req,res) {
 	});
 }
 
-exports.displayForm = function(res) {
+export function displayForm(res) {
 	fs.readFile('collection_input.html', function(err,data) {
 		res.writeHead(200, {
 			'Content-Type': 'text/html',

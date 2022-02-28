@@ -1,17 +1,18 @@
 //reading file system / file
-var fs = require("fs");
+import fs from "fs";
 //var http = require('http');
-var request = require("request");
+import needle from 'needle';
 //url parser
-var url = require('url');
+import url from 'url';
 //Library for input sanitation
-var validator = require('validator');
+//Library for input sanitation
+import validator from 'validator';
 //jsonld library
-var jsonld = require('jsonld');
+import jsonld from 'jsonld';
 //XML parsing library
-var xml2js = require('xml2js');
+import xml2js from 'xml2js';
 //config library
-var config = require('config');
+import config from 'config';
 
 var functionConfigs;
 fs.readFile('./viewWorksets/config-hashed.json', function(err,data) {
@@ -71,17 +72,10 @@ function getParameters(req,function_name) {
 }
 
 function sendSPARQLQuery(query,serviceMethod,params,req,res) {
-	request({
-		method: 'POST',
-		uri: config.get('Read-Only_Endpoint.domain') + ':' + config.get('Read-Only_Endpoint.port') + '/' + config.get('Read-Only_Endpoint.path'),
-		headers: {
-			'Content-Type': 'application/x-www-form-unencoded',
-		},
-		form: {
-			'default-graph-uri': '',
-			'query': query,
-			'format': 'application/ld+json'
-		}
+	needle.post(config.get('Read-Only_Endpoint.domain') + ':' + config.get('Read-Only_Endpoint.port') + '/' + config.get('Read-Only_Endpoint.path'),{
+		'default-graph-uri': '',
+		'query': query,
+		'format': 'application/ld+json'
 	}, function (er,rs,bd) {
 		if (er) {
 			res.write("ERROR IN SENDING REQUEST");
@@ -170,17 +164,10 @@ function deleteWorkset(req,res) {
 				}
 
 //				response = sendSPARQLQuery(data_string,method_name,params,req,res);
-				request({
-					method: 'POST',
-					uri: config.get('Read-Only_Endpoint.domain') + ':' + config.get('Read-Only_Endpoint.port') + '/' + config.get('Read-Only_Endpoint.path'),
-					headers: {
-						'Content-Type': 'application/x-www-form-unencoded',
-					},
-					form: {
-						'default-graph-uri': '',
-						'query': data_string,
-						'format': 'application/ld+json'
-					}
+				needle.post(config.get('Read-Only_Endpoint.domain') + ':' + config.get('Read-Only_Endpoint.port') + '/' + config.get('Read-Only_Endpoint.path'),{
+					'default-graph-uri': '',
+					'query': data_string,
+					'format': 'application/ld+json'
 				}, function (er,rs,bd) {
 					if (er) {
 						res.write("ERROR IN SENDING REQUEST");
@@ -215,23 +202,14 @@ function deleteWorkset(req,res) {
 													delete_query_string = delete_query_string.replace(new RegExp(functionConfigs[method_name]['id']['transform'].replace(/\$/g,'\\$'),'g'),'<' + params['id'] + '>');
 													console.log(delete_query_string);
 
-													request({
-														method: 'POST',
-														uri: config.get('Read-Write_Endpoint.domain') + ':' + config.get('Read-Write_Endpoint.port') + '/' + config.get('Read-Write_Endpoint.path'),
-														port: config.get('Read-Write_Endpoint.port'),
-														headers: {
-															'Content-Type': 'application/x-www-form-unencoded',
-														},
-														form: {
-															'default-graph-uri': '',
-															'query': delete_query_string,
-															'format': 'application/ld+json'
-														},
-														auth: {
-															user: config.get('Read-Write_Endpoint.username'),
-															password: config.get('Read-Write_Endpoint.password'),
-															sendImmediately: false
-														}
+													needle.post(config.get('Read-Write_Endpoint.domain') + ':' + config.get('Read-Write_Endpoint.port') + '/' + config.get('Read-Write_Endpoint.path'),{
+														'default-graph-uri': '',
+														'query': delete_query_string,
+														'format': 'application/ld+json'
+													},{
+														username: config.get('Read-Write_Endpoint.username'),
+														password: config.get('Read-Write_Endpoint.password'),
+														auth: 'digest'
 													}, function (e,r,b) {
 														if (e) {
 															res.write("ERROR IN SENDING REQUEST");
@@ -398,7 +376,7 @@ function listWorksetsContaining(req,res) {
 	});
 }
 
-exports.runSPARQLQuery = function(req,res) {
+export function runSPARQLQuery(req,res) {
 /*	var allowed_origins = ['analytics.hathitrust.org'];
 	if ('origin' in req['headers']) {
 		if (allowed_origins.includes(req['headers']['Origin'])) {

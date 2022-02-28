@@ -1,22 +1,22 @@
 //author: nnp2
 
 //reading file system / file
-var fs = require("fs");
+import fs from "fs";
 //http and rest nodejs library
-var http = require('http');
-var https = require('https');
+import http from 'http';
+import https from 'https';
 var privateKey = fs.readFileSync('sslcert/worksethtrc.key','utf8');
 var certificate = fs.readFileSync('sslcert/worksets.hathitrust.org.cert','utf8');
 var credentials = {key: privateKey, cert: certificate};
-var express = require('express');
+import express from 'express';
 var app = express();
 app.use(express.static('public'));
 
 //var request = require("request");
 //module for fetchCollection
-var fetchCollection = require('./fetchCollection.js');
-var dcWSfetch = require('./dcWSfetch.js');
-var viewWorksets = require('./viewWorksets.js');
+import * as fetchCollection from './fetchCollection.js';
+import * as dcWSfetch from './dcWSfetch.js';
+import * as viewWorksets from './viewWorksets.js';
 
 //Run the server
 var httpServer = http.createServer(app);
