@@ -5,7 +5,6 @@ import needle from 'needle';
 //url parser
 import url from 'url';
 //Library for input sanitation
-//Library for input sanitation
 import validator from 'validator';
 //jsonld library
 import jsonld from 'jsonld';
