@@ -21,7 +21,7 @@
   "type": "module",
   "dependencies": {
     "ajv": "^8.10.0",
-    "async": "^2.6.3",
+    "async": "^3.2.2",
     "config": "^3.3.7",
     "express": "^4.17.1",
     "formidable": "^1.2.2",
