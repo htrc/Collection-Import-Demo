@@ -8,7 +8,6 @@
 import url from 'url';
 import querystring from 'querystring';
 import thenRequest from 'then-request';
-import async from 'async';
 import _ from 'underscore';
 import jsonld from 'jsonld';
 import Q from 'q';
@@ -19,53 +18,41 @@ var jsonConfig = {};
 
 console.time("loadconfig");
 //init json config from url
-resourceRoot = "http://worksets.hathitrust.org/dcWSfetch_resources/"
+resourceRoot = "./dcWSfetch_resources/"
 jsonConfigFile = "config-hashed.json"
 //load configuration
-async.series([
-	function() {
-		result = thenRequest('GET', resourceRoot + jsonConfigFile);
-		result.then(function(res) {
-			jsonConfig = JSON.parse(res.getBody('UTF-8'));
-			//parse json Config, find any resource configuration url
-			Object.keys(jsonConfig.services).forEach(function(keyConfig) {
-				var configService = jsonConfig.services[keyConfig];
-				Object.keys(configService).forEach(function(key) {
-					var methodConfig = configService[key];
-					//parse Sparql definition
-					if (_.isObject(methodConfig)) {
-						console.time("getSparqlResource");
-						if (methodConfig['query'] !== undefined) {
-							result = thenRequest('GET', methodConfig['query']);
-							result.then(function(resSparql) {
-								console.timeEnd("getSparqlResource");
-								data = resSparql.getBody('UTF-8');
-								methodConfig['resQuery'] = data;
-							});
-						}
-						if (methodConfig['paging'] !== undefined) {
-							result = thenRequest('GET', methodConfig['paging']['query']);
-							result.then(function(resSparql) {
-								data = resSparql.getBody('UTF-8');
-								methodConfig['resPaging'] = data;
-							});
-						}
-						if (methodConfig['context'] !== undefined) {
-							console.time("getContextResource");
-							resultContext = thenRequest('GET', methodConfig['context']);
-							resultContext.then(function(resSparql) {
-								console.timeEnd("getContextResource");
-								data = resSparql.getBody('UTF-8');
-								methodConfig['resContext'] = JSON.parse(data);
-							});
-						}
-					}
-				})
-			})
-			console.timeEnd("loadconfig");
-		})
-	}
-])
+fs.readFile(resourceRoot + jsonConfigFile, function(err,res) {
+	jsonConfig = JSON.parse(res);
+	//parse json Config, find any resource configuration url
+	Object.keys(jsonConfig.services).forEach(function(keyConfig) {
+		var configService = jsonConfig.services[keyConfig];
+		Object.keys(configService).forEach(function(key) {
+			var methodConfig = configService[key];
+			//parse Sparql definition
+			if (_.isObject(methodConfig)) {
+				console.time("getSparqlResource");
+				if (methodConfig['query'] !== undefined) {
+					fs.readFile(resourceRoot + 'sparql/dcWSfetch/' + methodConfig['query'], 'utf8', function(err,data) {
+						methodConfig['resQuery'] = data;
+					});
+				}
+				if (methodConfig['paging'] !== undefined) {
+					fs.readFile(resourceRoot + 'sparql/dcWSfetch/' + methodConfig['paging']['query'], 'utf8', function(err,data) {
+						methodConfig['resPaging'] = data;
+					});
+				}
+				if (methodConfig['context'] !== undefined) {
+					console.time("getContextResource");
+					fs.readFile(resourceRoot + 'sparql/dcWSfetch/' + methodConfig['context'], function(err,data) {
+						methodConfig['resContext'] = JSON.parse(data);
+					});
+					console.timeEnd("getContextResource");
+				}
+			}
+		});
+	});
+	console.timeEnd("loadconfig");
+});
 
 //Used to load results where the number of triples is greater than the set limit
 function tracePage(serviceConfig,pOffset,pLimit) {
